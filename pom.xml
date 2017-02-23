@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.hops.management</groupId>
+  <groupId>io.hops.gpu</groupId>
   <artifactId>hops-gpu-management-impl-nvidia</artifactId>
   <version>1.0</version>
   <packaging>jar</packaging>
@@ -80,7 +80,7 @@
                 </exec>
                 <exec
                     command="mvn install:install-file -Dfile=target/classes/libhopsnvml.so -DgroupId=io.hops.gpu
-                            -DartifactId=nvml -Dversion=1.0 -Dpackaging=so -DlocalRepositoryPath=${maven.repo.local}"
+                            -DartifactId=libhopsnvml -Dversion=1.0 -Dpackaging=so -DlocalRepositoryPath=${maven.repo.local}"
                               dir="${project.build.directory}/.." failonerror="true">
                 </exec>
               </target>

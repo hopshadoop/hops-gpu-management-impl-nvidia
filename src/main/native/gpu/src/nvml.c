@@ -10,9 +10,8 @@ static const unsigned int NVIDIA_MAJOR_DEVICE = 195;
 
 
 
-  JNIEXPORT jboolean JNICALL
-  Java_org_apache_hadoop_yarn_server_nodemanager_util_devices_NvidiaManagementLibrary_initialize
-    (JNIEnv *env, jclass cls) {
+JNIEXPORT jboolean JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_initialize
+  (JNIEnv *env, jobject obj) {
         void* handle = dlopen("libnvidia-ml.so", RTLD_LAZY);
         if (!handle) {
             fprintf(stderr, "dlopen failed: %s\n", dlerror());
@@ -35,9 +34,8 @@ static const unsigned int NVIDIA_MAJOR_DEVICE = 195;
     }
 
 
-  JNIEXPORT jboolean JNICALL
-  Java_org_apache_hadoop_yarn_server_nodemanager_util_devices_NvidiaManagementLibrary_shutDown
-    (JNIEnv *env, jclass cls) {
+JNIEXPORT jboolean JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_shutDown
+  (JNIEnv *env, jobject obj) {
         void* handle = dlopen("libnvidia-ml.so", RTLD_LAZY);
                 if (!handle) {
                     fprintf(stderr, "dlopen failed: %s\n", dlerror());
@@ -55,10 +53,14 @@ static const unsigned int NVIDIA_MAJOR_DEVICE = 195;
                  }
     }
 
+    JNIEXPORT jint JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_getNumGPUs
+      (JNIEnv *env, jobject obj) {
+      return 4;
+      }
 
-JNIEXPORT jstring JNICALL
-Java_org_apache_hadoop_yarn_server_nodemanager_util_devices_NvidiaManagementLibrary_queryMandatoryDevices
-  (JNIEnv *env, jclass cls) {
+
+JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_queryMandatoryDevices
+  (JNIEnv *env, jobject obj) {
         char deviceIDsBuf[6*10 + 6];
         char *pos = deviceIDsBuf;
 
@@ -96,9 +98,8 @@ Java_org_apache_hadoop_yarn_server_nodemanager_util_devices_NvidiaManagementLibr
         return (*env)->NewStringUTF(env, deviceIDsBuf);
 }
 
-JNIEXPORT jstring JNICALL
-Java_org_apache_hadoop_yarn_server_nodemanager_util_devices_NvidiaManagementLibrary_queryAvailableDevices
-  (JNIEnv *env, jclass cls) {
+JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_queryAvailableDevices
+  (JNIEnv *env, jobject obj) {
   char formattedBuf[0];
 
         void* handle = dlopen("libnvidia-ml.so", RTLD_LAZY);
