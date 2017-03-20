@@ -12,7 +12,7 @@ static const unsigned int NVIDIA_MAJOR_DEVICE = 195;
 
 JNIEXPORT jboolean JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_initialize
   (JNIEnv *env, jobject obj) {
-        void* handle = dlopen("libnvidia-ml.so", RTLD_LAZY);
+        void* handle = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
         if (!handle) {
             fprintf(stderr, "dlopen failed: %s\n", dlerror());
             exit(1);
@@ -127,7 +127,8 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
             nvmlDevice_t device;
             arbitrary nvmlDeviceGetHandleByIndex;
             *(void**)(&nvmlDeviceGetHandleByIndex) = dlsym(handle, "nvmlDeviceGetHandleByIndex");
-            for (int index = 0; index < numAvailableDevices; index++) {
+            int index;
+            for (index = 0; index < numAvailableDevices; index++) {
 
                 //TODO handle the case when device throws error, they should not be used in scheduling
                 int ret = nvmlDeviceGetHandleByIndex(index, &device);
@@ -145,7 +146,8 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
 
             }
             //create formatted string "major1:minor1 major2:minor2 major3:minor"
-            for(int deviceIndex = 0; deviceIndex < numAvailableDevices;
+            int deviceIndex;
+            for(deviceIndex = 0; deviceIndex < numAvailableDevices;
              deviceIndex++) {
              pos += sprintf(pos, "%d:%d ", majorMinorDeviceIdPairs[deviceIndex*2], majorMinorDeviceIdPairs[deviceIndex*2+1]);
              }
