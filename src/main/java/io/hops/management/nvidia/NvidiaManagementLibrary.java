@@ -39,5 +39,5 @@ public class NvidiaManagementLibrary implements GPUManagementLibrary {
   public native String queryMandatoryDevices();
   
   @Override
-  public native String queryAvailableDevices();
+  public native String queryAvailableDevices(int configuredGPUs);
 }
