@@ -2,8 +2,8 @@
 #include <jni.h>
 /* Header for class io_hops_management_nvidia_NvidiaManagementLibrary */
 
-#ifndef _Included_NvidiaManagementLibrary
-#define _Included_NvidiaManagementLibrary
+#ifndef _Included_io_hops_management_nvidia_NvidiaManagementLibrary
+#define _Included_io_hops_management_nvidia_NvidiaManagementLibrary
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,10 +42,10 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
 /*
  * Class:     io_hops_management_nvidia_NvidiaManagementLibrary
  * Method:    queryAvailableDevices
- * Signature: ()Ljava/lang/String;
+ * Signature: (I)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_queryAvailableDevices
-  (JNIEnv *, jobject);
+  (JNIEnv *, jobject, jint);
 
 #ifdef __cplusplus
 }
