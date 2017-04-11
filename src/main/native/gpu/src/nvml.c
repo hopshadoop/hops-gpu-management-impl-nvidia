@@ -36,7 +36,7 @@ JNIEXPORT jboolean JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrar
 
 JNIEXPORT jboolean JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_shutDown
   (JNIEnv *env, jobject obj) {
-        void* handle = dlopen("libnvidia-ml.so", RTLD_LAZY);
+        void* handle = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
                 if (!handle) {
                     fprintf(stderr, "dlopen failed: %s\n", dlerror());
                     exit(1);
@@ -55,7 +55,27 @@ JNIEXPORT jboolean JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrar
 
     JNIEXPORT jint JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_getNumGPUs
       (JNIEnv *env, jobject obj) {
-      return 4;
+
+        void* handle = dlopen("libnvidia-ml.so", RTLD_LAZY);
+        if (!handle) {
+            fprintf(stderr, "dlopen failed: %s\n", dlerror());
+            exit(1);
+        }
+        if (handle == NULL) {
+            printf("woops! no dynamic lib here no");
+            return 1;
+        }
+
+        typedef void* (*arbitrary)();
+                    arbitrary nvmlDeviceGetCount_v2;
+                    *(void**)(&nvmlDeviceGetCount_v2) = dlsym(handle, "nvmlDeviceGetCount_v2");
+                    int numAvailableDevices = 0;
+                    int ret1 = nvmlDeviceGetCount_v2(&numAvailableDevices);
+                    if(ret1 != NVML_SUCCESS) {
+                    printf("could not query number of available GPU devices");
+                                return 0;
+                    }
+                    return numAvailableDevices;
       }
 
 
@@ -68,12 +88,10 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
         if (stat("/dev/nvidia-uvm", &nvidiauvmStat) < 0) {
               //device file needs to be created manually
               system("nvidia-modprobe -u -c=0");
-              stat("/dev/nvidia-uvm", &nvidiauvmStat);
-              return 1;
          }
 
-        int uvmDeviceMinor = minor(nvidiauvmStat.st_dev);
-        int uvmDeviceMajor = major(nvidiauvmStat.st_dev);
+        int uvmDeviceMinor = minor(nvidiauvmStat.st_rdev);
+        int uvmDeviceMajor = major(nvidiauvmStat.st_rdev);
 
         pos += sprintf(pos, "%d:%d ", uvmDeviceMajor, uvmDeviceMinor);
 
@@ -82,15 +100,15 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
             return 1;
         }
 
-        int actlDeviceMinor = minor(nvidiactlStat.st_dev);
-        int actlDeviceMajor = major(nvidiactlStat.st_dev);
+        int actlDeviceMinor = minor(nvidiactlStat.st_rdev);
+        int actlDeviceMajor = major(nvidiactlStat.st_rdev);
 
         pos += sprintf(pos, "%d:%d ", actlDeviceMajor, actlDeviceMinor);
 
         struct stat nvidiaUvmToolsStat;
         if (stat("/dev/nvidia-uvm-tools", &nvidiaUvmToolsStat) == 0) {
-            int uvmToolsDeviceMinor = minor(nvidiaUvmToolsStat.st_dev);
-            int uvmToolsDeviceMajor = major(nvidiaUvmToolsStat.st_dev);
+            int uvmToolsDeviceMinor = minor(nvidiaUvmToolsStat.st_rdev);
+            int uvmToolsDeviceMajor = major(nvidiaUvmToolsStat.st_rdev);
 
             sprintf(pos, "%d:%d ", uvmToolsDeviceMajor, uvmToolsDeviceMinor);
         }
@@ -99,7 +117,7 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
 }
 
 JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_queryAvailableDevices
-  (JNIEnv *env, jobject obj) {
+  (JNIEnv *env, jobject obj, jint gpus) {
   char formattedBuf[0];
 
         void* handle = dlopen("libnvidia-ml.so", RTLD_LAZY);
@@ -113,22 +131,18 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
         }
         else {
             typedef void* (*arbitrary)();
-            arbitrary nvmlDeviceGetCount_v2;
-            *(void**)(&nvmlDeviceGetCount_v2) = dlsym(handle, "nvmlDeviceGetCount_v2");
-            int numAvailableDevices = 0;
-            int ret1 = nvmlDeviceGetCount_v2(&numAvailableDevices);
 
-            int majorMinorDeviceIdPairs[numAvailableDevices*2];
+            int majorMinorDeviceIdPairs[gpus*2];
 
-            char formattedBuf[10*(numAvailableDevices+1) + (2*
-            (numAvailableDevices+1))];
+            char formattedBuf[10*(gpus+1) + (2*
+            (gpus+1))];
             char *pos = formattedBuf;
 
             nvmlDevice_t device;
             arbitrary nvmlDeviceGetHandleByIndex;
             *(void**)(&nvmlDeviceGetHandleByIndex) = dlsym(handle, "nvmlDeviceGetHandleByIndex");
             int index;
-            for (index = 0; index < numAvailableDevices; index++) {
+            for (index = 0; index < gpus; index++) {
 
                 //TODO handle the case when device throws error, they should not be used in scheduling
                 int ret = nvmlDeviceGetHandleByIndex(index, &device);
@@ -147,7 +161,7 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
             }
             //create formatted string "major1:minor1 major2:minor2 major3:minor"
             int deviceIndex;
-            for(deviceIndex = 0; deviceIndex < numAvailableDevices;
+            for(deviceIndex = 0; deviceIndex < gpus;
              deviceIndex++) {
              pos += sprintf(pos, "%d:%d ", majorMinorDeviceIdPairs[deviceIndex*2], majorMinorDeviceIdPairs[deviceIndex*2+1]);
              }
