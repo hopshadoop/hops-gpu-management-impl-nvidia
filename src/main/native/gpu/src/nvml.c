@@ -56,7 +56,7 @@ JNIEXPORT jboolean JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrar
     JNIEXPORT jint JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_getNumGPUs
       (JNIEnv *env, jobject obj) {
 
-        void* handle = dlopen("libnvidia-ml.so", RTLD_LAZY);
+        void* handle = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
         if (!handle) {
             fprintf(stderr, "dlopen failed: %s\n", dlerror());
             exit(1);
@@ -120,7 +120,7 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
   (JNIEnv *env, jobject obj, jint gpus) {
   char formattedBuf[0];
 
-        void* handle = dlopen("libnvidia-ml.so", RTLD_LAZY);
+        void* handle = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
         if (!handle) {
             fprintf(stderr, "dlopen failed: %s\n", dlerror());
             exit(1);
@@ -169,5 +169,3 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
         }
         return (*env)->NewStringUTF(env, "");
     }
-
-//TODO NodeManager NVML CLEANUP? nvmlShutdown() method?
