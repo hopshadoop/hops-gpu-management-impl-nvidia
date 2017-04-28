@@ -18,7 +18,7 @@ package io.hops.management.nvidia;
 import io.hops.*;
 
 /**
- * A helper to load the native libnvidia-ml.so
+ * A helper to load the native libnvidia-ml.so.1
  */
 public class NvidiaManagementLibrary implements GPUManagementLibrary {
   
