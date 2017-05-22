@@ -14,7 +14,7 @@ JNIEXPORT jboolean JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrar
 
     if (handle == NULL) {
       fprintf(stderr, "Could not load libnvidia-ml.so.1 library, is LD_LIBRARY_PATH set correctly?");
-      exit(1);
+      return 0;
     }
     typedef void * ( * arbitrary)();
     arbitrary nvmlInit;
@@ -33,7 +33,7 @@ JNIEXPORT jboolean JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrar
     void * handle = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
     if (handle == NULL) {
       fprintf(stderr, "Could not load libnvidia-ml.so.1 library, is LD_LIBRARY_PATH set correctly?");
-      exit(1);
+      return 0;
     }
     typedef void * ( * arbitrary)();
     arbitrary nvmlShutdown;
@@ -53,7 +53,7 @@ JNIEXPORT jint JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_ge
     void * handle = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
     if (handle == NULL) {
       fprintf(stderr, "Could not load libnvidia-ml.so.1 library, is LD_LIBRARY_PATH set correctly?");
-      exit(1);
+      return 0;
     }
 
     typedef void * ( * arbitrary)();
@@ -73,47 +73,62 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
     char deviceIDsBuf[6 * 10 + 6];
     char * pos = deviceIDsBuf;
 
+    int foundDrivers = -1;
+
     struct stat nvidiauvmStat;
-    if (stat("/dev/nvidia-uvm", & nvidiauvmStat) < 0) {
-      //device file needs to be created manually
+    int ret = stat("/dev/nvidia-uvm", & nvidiauvmStat);
+    if (ret == 0) {
+      int uvmDeviceMinor = minor(nvidiauvmStat.st_rdev);
+      int uvmDeviceMajor = major(nvidiauvmStat.st_rdev);
+      pos += sprintf(pos, "%d:%d ", uvmDeviceMajor, uvmDeviceMinor);
+      foundDrivers = 1;
+    } else {
+    //device file needs to be created manually
       system("nvidia-modprobe -u -c=0");
+      ret = stat("/dev/nvidia-uvm", & nvidiauvmStat);
+      if (ret == 0) {
+        int uvmDeviceMinor = minor(nvidiauvmStat.st_rdev);
+        int uvmDeviceMajor = major(nvidiauvmStat.st_rdev);
+        pos += sprintf(pos, "%d:%d ", uvmDeviceMajor, uvmDeviceMinor);
+        foundDrivers = 1;
+      }
     }
-
-    int uvmDeviceMinor = minor(nvidiauvmStat.st_rdev);
-    int uvmDeviceMajor = major(nvidiauvmStat.st_rdev);
-
-    pos += sprintf(pos, "%d:%d ", uvmDeviceMajor, uvmDeviceMinor);
 
     struct stat nvidiactlStat;
-    if (stat("/dev/nvidiactl", & nvidiactlStat) < 0) {
-      return 1;
-    }
-
-    int actlDeviceMinor = minor(nvidiactlStat.st_rdev);
-    int actlDeviceMajor = major(nvidiactlStat.st_rdev);
-
-    pos += sprintf(pos, "%d:%d ", actlDeviceMajor, actlDeviceMinor);
+    if (stat("/dev/nvidiactl", & nvidiactlStat) == 0) {
+      int actlDeviceMinor = minor(nvidiactlStat.st_rdev);
+      int actlDeviceMajor = major(nvidiactlStat.st_rdev);
+      pos += sprintf(pos, "%d:%d ", actlDeviceMajor, actlDeviceMinor);
+      foundDrivers = 1;
+    };
 
     struct stat nvidiaUvmToolsStat;
     if (stat("/dev/nvidia-uvm-tools", & nvidiaUvmToolsStat) == 0) {
       int uvmToolsDeviceMinor = minor(nvidiaUvmToolsStat.st_rdev);
       int uvmToolsDeviceMajor = major(nvidiaUvmToolsStat.st_rdev);
+      foundDrivers = 1;
 
       sprintf(pos, "%d:%d ", uvmToolsDeviceMajor, uvmToolsDeviceMinor);
     }
-    ( * env) -> NewStringUTF(env, deviceIDsBuf);
+    if(foundDrivers == 1) {
     return ( * env) -> NewStringUTF(env, deviceIDsBuf);
+    } else {
+    return ( * env) -> NewStringUTF(env, ""); }
   }
 
 JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_queryAvailableDevices
   (JNIEnv * env, jobject obj, jint gpus) {
+
+    if(gpus == 0) {
+    return ( * env) -> NewStringUTF(env, "");
+    }
     char formattedBuf[0];
 
     void * handle = dlopen("libnvidia-ml.so.1", RTLD_LAZY);
 
     if (handle == NULL) {
       fprintf(stderr, "Could not load libnvidia-ml.so.1 library, is LD_LIBRARY_PATH set correctly?");
-      exit(1);
+      return ( * env) -> NewStringUTF(env, "");
     } else {
       typedef void * ( * arbitrary)();
 
