@@ -80,7 +80,7 @@
                 </exec>
                 <exec
                     command="mvn install:install-file -Dfile=target/classes/libhopsnvml.so -DgroupId=io.hops.gpu
-                            -DartifactId=libhopsnvml -Dversion=1.0 -Dpackaging=so -DlocalRepositoryPath=${maven.repo.local}"
+                            -DartifactId=libhopsnvml -Dversion=1.0 -Dpackaging=so -DlocalRepositoryPath=${settings.localRepository}"
                               dir="${project.build.directory}/.." failonerror="true">
                 </exec>
               </target>
