@@ -65,7 +65,20 @@ JNIEXPORT jint JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_ge
       printf("could not query number of available GPU devices");
       return 0;
     }
-    return numAvailableDevices;
+
+    int numNonErroneousDevices = 0;
+    int index;
+    nvmlDevice_t device;
+    for (index = 0; index < numAvailableDevices; index++) {
+      int ret = nvmlDeviceGetHandleByIndex(index, & device);
+      if (ret == NVML_SUCCESS) {
+          numNonErroneousDevices++;
+      } else {
+          fprintf(stderr, "nvmlDeviceGetMinorNumber call was not successful, return code: %d\n", ret);
+      }
+    }
+
+    return numNonErroneousDevices;
   }
 
 JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_queryMandatoryDevices
@@ -117,10 +130,10 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
   }
 
 JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_queryAvailableDevices
-  (JNIEnv * env, jobject obj, jint gpus) {
+  (JNIEnv * env, jobject obj, jint reportedGPUs) {
 
-    if(gpus == 0) {
-    return ( * env) -> NewStringUTF(env, "");
+    if(reportedGPUs == 0) {
+        return ( * env) -> NewStringUTF(env, "");
     }
     char formattedBuf[0];
 
@@ -132,19 +145,19 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
     } else {
       typedef void * ( * arbitrary)();
 
-      int majorMinorDeviceIdPairs[gpus * 2];
+      int majorMinorDeviceIdPairs[reportedGPUs * 2];
 
-      char formattedBuf[10 * (gpus + 1) + (2 *
-        (gpus + 1))];
+      char formattedBuf[10 * (reportedGPUs + 1) + (2 *
+        (reportedGPUs + 1))];
       char * pos = formattedBuf;
 
       nvmlDevice_t device;
       arbitrary nvmlDeviceGetHandleByIndex;
       * (void * * )( & nvmlDeviceGetHandleByIndex) = dlsym(handle, "nvmlDeviceGetHandleByIndex");
-      int index;
-      for (index = 0; index < gpus; index++) {
+      int index = 0;
+      int numSchedulableGPUs = 0;
+      while (numSchedulableGPUs != reportedGPUs) {
 
-        //TODO handle the case when device throws error, they should not be used in scheduling
         int ret = nvmlDeviceGetHandleByIndex(index, & device);
         if (ret == NVML_SUCCESS) {
           int minornumber = -1;
@@ -152,16 +165,17 @@ JNIEXPORT jstring JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary
           * (void * * )( & nvmlDeviceGetMinorNumber) = dlsym(handle, "nvmlDeviceGetMinorNumber");
           int ret3 = nvmlDeviceGetMinorNumber(device, & minornumber);
 
-          majorMinorDeviceIdPairs[index * 2] = 195;
-          majorMinorDeviceIdPairs[index * 2 + 1] = minornumber;
+          majorMinorDeviceIdPairs[numSchedulableGPUs * 2] = 195;
+          majorMinorDeviceIdPairs[numSchedulableGPUs * 2 + 1] = minornumber;
+          numSchedulableGPUs++;
         } else {
           fprintf(stderr, "nvmlDeviceGetMinorNumber call was not successful, return code: %d\n", ret);
         }
-
+        index++;
       }
       //create formatted string "major1:minor1 major2:minor2 major3:minor"
       int deviceIndex;
-      for (deviceIndex = 0; deviceIndex < gpus; deviceIndex++) {
+      for (deviceIndex = 0; deviceIndex < reportedGPUs; deviceIndex++) {
         pos += sprintf(pos, "%d:%d ", majorMinorDeviceIdPairs[deviceIndex * 2], majorMinorDeviceIdPairs[deviceIndex * 2 + 1]);
       }
       return ( * env) -> NewStringUTF(env, formattedBuf);
