@@ -69,15 +69,16 @@ JNIEXPORT jint JNICALL Java_io_hops_management_nvidia_NvidiaManagementLibrary_ge
     int numNonErroneousDevices = 0;
     int index;
     nvmlDevice_t device;
+    arbitrary nvmlDeviceGetHandleByIndex_v2;
+    * (void * * )( & nvmlDeviceGetHandleByIndex_v2) = dlsym(handle, "nvmlDeviceGetHandleByIndex_v2");
     for (index = 0; index < numAvailableDevices; index++) {
-      int ret = nvmlDeviceGetHandleByIndex(index, & device);
+      int ret = nvmlDeviceGetHandleByIndex_v2(index, & device);
       if (ret == NVML_SUCCESS) {
           numNonErroneousDevices++;
       } else {
           fprintf(stderr, "nvmlDeviceGetMinorNumber call was not successful, return code: %d\n", ret);
       }
     }
-
     return numNonErroneousDevices;
   }
 
