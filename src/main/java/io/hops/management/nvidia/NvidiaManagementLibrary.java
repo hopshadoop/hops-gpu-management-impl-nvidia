@@ -23,7 +23,7 @@ import io.hops.*;
 public class NvidiaManagementLibrary implements GPUManagementLibrary {
   
   static {
-    System.loadLibrary("hopsnvml-1.0");
+    System.loadLibrary("hopsnvml");
   }
   
   @Override
@@ -33,7 +33,9 @@ public class NvidiaManagementLibrary implements GPUManagementLibrary {
   public native boolean shutDown();
   
   @Override
-  public native int getNumGPUs();
+  public int getNumGPUs(){
+    return 1;
+  }
   
   @Override
   public native String queryMandatoryDevices();
