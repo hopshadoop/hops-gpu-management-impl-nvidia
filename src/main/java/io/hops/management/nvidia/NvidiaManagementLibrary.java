@@ -33,9 +33,7 @@ public class NvidiaManagementLibrary implements GPUManagementLibrary {
   public native boolean shutDown();
   
   @Override
-  public int getNumGPUs(){
-    return 1;
-  }
+  public native int getNumGPUs();
   
   @Override
   public native String queryMandatoryDevices();
