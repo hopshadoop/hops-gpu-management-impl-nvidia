@@ -45,6 +45,31 @@
     </repository>
   </repositories>
 
+  <profiles>
+    <profile>
+      <id>os.linux</id>
+      <activation>
+        <os>
+          <family>!Mac</family>
+        </os>
+      </activation>
+      <properties>
+        <lib_ext>so</lib_ext>
+      </properties>
+    </profile>
+    <profile>
+      <id>os.mac</id>
+      <activation>
+        <os>
+          <family>Mac</family>
+        </os>
+      </activation>
+      <properties>
+        <lib_ext>dylib</lib_ext>
+      </properties>
+    </profile>
+  </profiles>
+
   <build>
     <extensions>
       <extension>
@@ -75,11 +100,11 @@
                   <arg line="VERBOSE=1"/>
                  </exec>
                 <exec
-                    command="cp classes/libhopsnvml.so classes/libhopsnvml-${project.version}.so" dir="${project.build.directory}" failonerror="true">
+                    command="cp classes/libhopsnvml.${lib_ext} classes/libhopsnvml-${project.version}.${lib_ext}" dir="${project.build.directory}" failonerror="true">
                 </exec>
                 <exec
-                    command="mvn install:install-file -Dfile=target/classes/libhopsnvml.so -DgroupId=io.hops.gpu
-                            -DartifactId=libhopsnvml -Dversion=${project.version} -Dpackaging=so -DlocalRepositoryPath=${settings.localRepository}"
+                    command="mvn install:install-file -Dfile=target/classes/libhopsnvml.${lib_ext} -DgroupId=io.hops.gpu
+                            -DartifactId=libhopsnvml -Dversion=${project.version} -Dpackaging=${lib_ext} -DlocalRepositoryPath=${settings.localRepository}"
                               dir="${project.build.directory}/.." failonerror="true">
                 </exec>
               </target>
@@ -116,7 +141,7 @@
       </resource>
     </resources>
   </build>
-  
+
   <distributionManagement>
     <repository>
       <id>sics-release-repository</id>
